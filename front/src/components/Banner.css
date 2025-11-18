@@ -1,0 +1,90 @@
+/* ===== BANNER MODERNO CON FONDO BLANCO ===== */
+.banner {
+  position: relative;
+  height: 80vh;
+  background: #ffffff; /* Fondo blanco limpio */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  color: #0f0f2f;
+}
+
+/* Efecto de sombra azul clara más lenta */
+.banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    115deg,
+    rgba(100, 180, 255, 0.15),
+    rgba(255, 255, 255, 0.5),
+    rgba(100, 180, 255, 0.15)
+  );
+  transform: skewX(-25deg);
+  animation: shine 10s infinite linear; /* más lento */
+  z-index: 0;
+}
+
+@keyframes shine {
+  0% {
+    left: -60%;
+  }
+  100% {
+    left: 120%;
+  }
+}
+
+/* ===== TÍTULO PRINCIPAL ===== */
+.banner-overlay {
+  position: relative;
+  z-index: 2;
+  margin-top: 2rem; /* sube el título */
+  text-align: center;
+}
+
+.banner-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #1a1a40;
+  text-shadow: 0 0 8px rgba(120, 160, 255, 0.4);
+}
+
+/* ===== CARRUSEL ===== */
+.carousel {
+  position: relative;
+  width: 80%;
+  height: 50%;
+  margin-top: 2rem;
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+  background: #f0f0f0;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.85);
+  transition: opacity 1s ease-in-out;
+  border-radius: 20px;
+}
+
+.carousel-text {
+  position: absolute;
+  bottom: 25px;
+  left: 30px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 12px 25px;
+  border-radius: 8px;
+  color: #1c1c40;
+  font-size: 1.6rem;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
