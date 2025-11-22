@@ -1,3 +1,5 @@
+para usar la base de datos: mysql -u usuario -p < backend/database.sql
+
 PROYECTO REALIZADO POR:
 
 Brayan Stiven Rojas Fernández
