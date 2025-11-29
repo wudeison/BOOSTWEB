@@ -10,6 +10,7 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  overflow-y: auto;
 }
 
 .modal-content {
@@ -18,29 +19,52 @@
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-  padding: 20px;
+  padding: 15px 20px;
   width: 100%;
   max-width: 400px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
   color: #fff;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari y Opera */
 }
 
 .form-scroll {
-  overflow-y: auto;
-  flex: 1;
   padding-right: 5px;
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: 2px;
+  font-weight: 500;
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+.modal-content legend {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.modal-content fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 
 .modal-content input,
 .modal-content select {
   width: 100%;
-  padding: 10px;
-  border-radius: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
   border: none;
-  margin-bottom: 12px;
-  font-size: 0.95rem;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
   outline: none;
   box-sizing: border-box;
   background: rgba(255, 255, 255, 0.9);
@@ -56,21 +80,22 @@
 .form-buttons {
   display: flex;
   justify-content: space-between;
+  gap: 10px;
   margin-top: 10px;
 }
 
 .form-buttons button {
   flex: 1;
-  padding: 10px;
-  border-radius: 10px;
+  padding: 8px;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   transition: 0.2s;
   border: none;
+  font-size: 0.85rem;
 }
 
 .form-buttons button:first-child {
-  margin-right: 10px;
   background: linear-gradient(90deg, #007bff, #00c6ff);
   color: white;
 }
@@ -90,3 +115,21 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* Ocultar barras de desplazamiento manteniendo la capacidad de desplazamiento */
+.form-scroll::-webkit-scrollbar { 
+  width: 6px; 
+}
+
+.form-scroll::-webkit-scrollbar-track { 
+  background: rgba(255,255,255,0.1); 
+  border-radius: 10px; 
+}
+
+.form-scroll::-webkit-scrollbar-thumb { 
+  background: rgba(255,255,255,0.3); 
+  border-radius: 10px; 
+}
+
+.form-scroll::-webkit-scrollbar-thumb:hover { 
+  background: rgba(255,255,255,0.5); 
+}

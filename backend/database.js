@@ -1,18 +1,24 @@
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise");
 
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "tarrao",        // la contraseña de mi MySQL
-  database: "boost"
+  database: "boost",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-db.connect((err) => {
-  if (err) {
-    console.log("❌ Error al conectar a MySQL:", err);
-  } else {
+// Verificar conexión
+(async () => {
+  try {
+    const connection = await db.getConnection();
     console.log("📌 Conectado a MySQL (BD: boost)");
+    connection.release();
+  } catch (err) {
+    console.log("❌ Error al conectar a MySQL:", err);
   }
-});
+})();
 
 module.exports = db;

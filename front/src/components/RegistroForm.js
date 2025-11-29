@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./RegistroForm.css";
+import API_URL from "../config"; // Importa la URL general
 
 const RegistroForm = ({ onClose, onRegistroExitoso }) => {
   const [formData, setFormData] = useState({
@@ -51,7 +52,7 @@ const RegistroForm = ({ onClose, onRegistroExitoso }) => {
     };
 
     try {
-      const res = await fetch("http://localhost:4000/api/registro", {
+      const res = await fetch(`${API_URL}/api/registro`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -75,13 +76,14 @@ const RegistroForm = ({ onClose, onRegistroExitoso }) => {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
+    <section className="modal-overlay" role="dialog" aria-labelledby="registro-title">
+      <article className="modal-content">
         <form onSubmit={handleSubmit}>
-          <div className="form-scroll">
-            <label>Número de cédula:</label>
+          <fieldset className="form-scroll">
+            <label htmlFor="idUsuario">Número de cédula:</label>
             <input
               type="text"
+              id="idUsuario"
               name="idUsuario"
               placeholder="Ingresa tu número de cédula"
               value={formData.idUsuario}
@@ -89,9 +91,10 @@ const RegistroForm = ({ onClose, onRegistroExitoso }) => {
               required
             />
 
-            <label>Nombre completo:</label>
+            <label htmlFor="nombre">Nombre completo:</label>
             <input
               type="text"
+              id="nombre"
               name="nombre"
               placeholder="Ingresa tu nombre completo"
               value={formData.nombre}
@@ -99,9 +102,10 @@ const RegistroForm = ({ onClose, onRegistroExitoso }) => {
               required
             />
 
-            <label>Correo electrónico:</label>
+            <label htmlFor="correo">Correo electrónico:</label>
             <input
               type="email"
+              id="correo"
               name="correo"
               placeholder="Ingresa tu correo electrónico"
               value={formData.correo}
@@ -109,9 +113,10 @@ const RegistroForm = ({ onClose, onRegistroExitoso }) => {
               required
             />
 
-            <label>Contraseña:</label>
+            <label htmlFor="contraseña">Contraseña:</label>
             <input
               type="password"
+              id="contraseña"
               name="contraseña"
               placeholder="Crea una contraseña"
               value={formData.contraseña}
@@ -119,9 +124,10 @@ const RegistroForm = ({ onClose, onRegistroExitoso }) => {
               required
             />
 
-            <label>Confirmar contraseña:</label>
+            <label htmlFor="confirmar">Confirmar contraseña:</label>
             <input
               type="password"
+              id="confirmar"
               name="confirmar"
               placeholder="Repite tu contraseña"
               value={formData.confirmar}
@@ -129,8 +135,9 @@ const RegistroForm = ({ onClose, onRegistroExitoso }) => {
               required
             />
 
-            <label>Tipo de usuario:</label>
+            <label htmlFor="tipoUsuario">Tipo de usuario:</label>
             <select
+              id="tipoUsuario"
               name="tipoUsuario"
               value={formData.tipoUsuario}
               onChange={handleChange}
@@ -140,7 +147,7 @@ const RegistroForm = ({ onClose, onRegistroExitoso }) => {
               <option value="profesional">Profesional</option>
               <option value="cliente">Cliente</option>
             </select>
-          </div>
+          </fieldset>
 
           <div className="form-buttons">
             <button type="submit" className="btn-submit">
@@ -151,10 +158,9 @@ const RegistroForm = ({ onClose, onRegistroExitoso }) => {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </article>
+    </section>
   );
 };
 
 export default RegistroForm;
-
