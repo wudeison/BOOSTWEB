@@ -1,0 +1,48 @@
+/* Fondo general */
+.bienve-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e4e6e9, #5c79c9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: white;
+  padding: 20px;
+}
+
+/* Título */
+.bienve-titulo {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: rgb(243, 245, 247);
+  text-shadow: 0 2px 5px rgba(0,0,0,0.4);
+}
+
+/* Texto */
+.bienve-texto {
+  font-size: 1.2rem;
+  max-width: 600px;
+  margin-bottom: 30px;
+  color: #f0f0f0;
+}
+
+/* Botón atrás */
+.btn-atras {
+  background: linear-gradient(90deg, #e0e0e0, #ffffff);
+  color: #004aad;
+  border: none;
+  padding: 12px 25px;
+  font-size: 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.btn-atras:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.35);
+}

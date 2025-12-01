@@ -1,76 +1,132 @@
 import React, { useState } from "react";
-import "./RegistroForm.css";
+import { useNavigate } from "react-router-dom";
+import "./LoginForm.css";
+import API_URL from "../config"; // Importa la URL general
 
-const LoginForm = ({ onClose }) => {
-  const [correo, setCorreo] = useState("");
-  const [contraseña, setContraseña] = useState("");
+function LoginForm({ onLoginExitoso, onClose }) {
+  const [loginData, setLoginData] = useState({
+    idUsuario: "",
+    contrasena: ""
+  });
 
-  const handleLogin = async (e) => {
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setLoginData({
+      ...loginData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar que el correo tenga formato correcto
-    const correoValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!correoValido.test(correo)) {
-      alert("⚠️ Ingresa un correo electrónico válido.");
-      return;
-    }
+    const payload = {
+      idUsuario: loginData.idUsuario,
+      contrasena: loginData.contrasena,
+    };
 
     try {
-      const res = await fetch("http://localhost:4000/api/login", {
+      const res = await fetch(`${API_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correo, contraseña }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
 
-      if (res.ok) {
-        alert("✅ Inicio de sesión exitoso");
-        onClose();
-      } else {
+      if (!res.ok) {
         alert("❌ " + data.mensaje);
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      alert("Error al conectar con el servidor");
+
+      onLoginExitoso && onLoginExitoso(data.cliente);
+      onClose && onClose();
+
+      const cliente = data.cliente || {};
+      
+      // Guardar en localStorage según tipo de usuario
+      try {
+        if (cliente.tipoUsuario === "profesional") {
+          localStorage.setItem('profesional', JSON.stringify(cliente));
+          localStorage.setItem('usuario', JSON.stringify(cliente));
+        } else {
+          localStorage.setItem('cliente', JSON.stringify(cliente));
+          localStorage.setItem('usuario', JSON.stringify(cliente));
+        }
+      } catch (e) {}
+
+      // Validar si el perfil está completo verificando campos clave
+      if (cliente.tipoUsuario === "cliente") {
+        const perfilCompleto = cliente.nombre && 
+                              cliente.correo && 
+                              cliente.telefono && 
+                              cliente.ciudad;
+
+        if (perfilCompleto) {
+          // Cliente con perfil completo -> ir a BienveCliente
+          navigate("/bienvecliente", { state: { cliente } });
+        } else {
+          // Cliente con perfil incompleto -> completar perfil
+          navigate("/registroperfilcliente", { state: { cliente } });
+        }
+      } else if (cliente.tipoUsuario === "profesional") {
+        // Validar perfil profesional (necesita nombre, profesión)
+        const perfilCompleto = cliente.nombreCompleto && cliente.profesion;
+
+        if (perfilCompleto) {
+          // Profesional con perfil completo -> ir a BienveProfesional
+          navigate("/bienveprofesional", { state: { profesional: cliente } });
+        } else {
+          // Profesional con perfil incompleto -> completar perfil
+          navigate("/registroperfilprofesional", { state: { profesional: cliente } });
+        }
+      } else {
+        // Tipo de usuario desconocido -> formulario de registro
+        navigate("/registroperfilcliente", { state: { cliente } });
+      }
+
+    } catch (error) {
+      alert("❌ Error al conectar con el servidor");
     }
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <h2>Iniciar Sesión</h2>
-        <form onSubmit={handleLogin}>
-          <label>Correo electrónico:</label>
-          <input
-            type="email"
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
-            placeholder="Ingresa tu correo"
-            required
-          />
+    <section className="modal-overlay" onClick={onClose}>
+      <article className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <form onSubmit={handleSubmit}>
+          <h2>Acceso al sistema</h2>
 
-          <label>Contraseña:</label>
-          <input
-            type="password"
-            value={contraseña}
-            onChange={(e) => setContraseña(e.target.value)}
-            placeholder="Ingresa tu contraseña"
-            required
-          />
+          <label>
+            ID Cliente:
+            <input
+              type="text"
+              name="idUsuario"
+              value={loginData.idUsuario}
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          <label>
+            Contraseña:
+            <input
+              type="password"
+              name="contrasena"
+              value={loginData.contrasena}
+              onChange={handleChange}
+              required
+            />
+          </label>
 
           <div className="form-buttons">
-            <button type="submit" className="btn-submit">
-              Acceder
-            </button>
-            <button type="button" className="btn-cancel" onClick={onClose}>
-              Cancelar
-            </button>
+            <button type="submit">Acceder</button>
+            <button type="button" onClick={onClose}>Cancelar</button>
           </div>
         </form>
-      </div>
-    </div>
+      </article>
+    </section>
   );
-};
+}
 
 export default LoginForm;

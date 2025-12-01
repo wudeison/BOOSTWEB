@@ -1,0 +1,358 @@
+/* Estilos específicos para RegistroPerfilCliente */
+
+.perfil-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 10px;
+  overflow-y: auto;
+
+.perfil-container {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  padding: 50px 100px;
+  width: 100%;
+  max-width: 1400px;
+  max-height: 95vh;
+  overflow-y: visible;
+  color: #fff;
+  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.perfil-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.perfil-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.perfil-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+.perfil-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.perfil-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.perfil-header h2 {
+  font-size: 2rem;
+  color: #fff;
+  margin-bottom: 8px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.perfil-header p {
+  color: #fff;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.perfil-container form {
+  width: 100%;
+  margin: 0;
+  gap: 0;
+  display: block;
+}
+
+/* Galería de avatares */
+.avatar-section {
+  margin-bottom: 40px;
+  text-align: center;
+  width: 100%;
+  overflow: visible;
+}
+
+.avatar-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.avatar-gallery {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  padding: 20px 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.avatar-item {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 3px solid #ddd;
+  flex: 0 0 110px;
+  transition: all 0.3s ease;
+}
+
+.avatar-item:hover {
+  transform: scale(1.08);
+  border-color: #007bff;
+}
+
+.avatar-item.selected {
+  border: 4px solid #007bff;
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+  transform: scale(1.1);
+}
+
+/* Formulario */
+.perfil-form {
+  margin-bottom: 30px;
+  width: 100%;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: 25px 40px;
+  align-items: start;
+  width: 100%;
+}
+
+/* Hacer que ciudad y horario preferido ocupen una columna completa */
+.form-field#ciudad,
+.form-field#preferencias {
+  grid-column: span 1;
+  min-width: 0;
+}
+
+/* Forzar ancho de los inputs/selects dentro de esos campos */
+#ciudad input,
+#preferencias select {
+  width: 100%;
+  min-width: 0;
+}
+
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  text-align: left;
+  margin-bottom: 12px;
+}
+
+.form-field.same-width {
+  width: 100%;
+  min-width: 0;
+}
+
+.form-field label {
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  text-align: left !important;
+  display: block;
+  width: 100%;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 96%;
+  margin-top: 10px;
+  min-width: 0;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+  color: #000;
+  box-sizing: border-box;
+  outline: none;
+  height: 44px;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 90px;
+  font-family: inherit;
+}
+
+.form-field input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #007bff;
+}
+
+.checkbox-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-direction: row;
+  width: auto;
+  margin: 0;
+}
+
+.checkbox-field span {
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.checkbox-group {
+  display: flex !important;
+  gap: 25px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+/* Campo que ocupa 2 columnas (bio, observaciones) */
+.form-field.full-width {
+  grid-column: span 4;
+  align-items: flex-start !important;
+}
+
+/* Dar más espacio a los dos últimos campos del grid */
+.form-grid > .form-field:nth-last-child(2),
+.form-grid > .form-field:nth-last-child(1) {
+  padding-right: 60px;
+  min-width: 180px;
+}
+}
+
+.form-field.habilidades-field {
+  grid-column: span 2;
+}
+
+/* Botones */
+.form-actions {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  padding-top: 30px;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 12px 80px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, #007bff, #00c6ff);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 1600px) {
+  .form-grid {
+    grid-template-columns: repeat(3, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 1200px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .perfil-container {
+    padding: 30px 40px;
+    width: 96%;
+  }
+}
+
+@media (max-width: 768px) {
+  .perfil-container {
+    padding: 20px 25px;
+    max-height: 95vh;
+    width: 95%;
+  }
+
+  .perfil-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  
+  .form-field.full-width {
+    grid-column: span 1;
+  }
+
+  .avatar-item {
+    width: 80px;
+    height: 80px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+  }
+}
