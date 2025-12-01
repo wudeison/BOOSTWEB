@@ -3,6 +3,8 @@ const express = require("express");
 const router = express.Router();
 const db = require("../database");
 
+const TARIFA_FIJA = 80000;
+
 // PUT /api/reservas/notificacion/:idSesion - Ocultar notificación de cancelación
 router.put("/reservas/notificacion/:idSesion", async (req, res) => {
   const { idSesion } = req.params;
@@ -19,13 +21,13 @@ router.put("/reservas/notificacion/:idSesion", async (req, res) => {
 
 // POST /api/reservas/crear - Crear una nueva reserva con pago
 router.post("/reservas/crear", async (req, res) => {
-  const { idCliente, idProfesional, idDisponibilidad, monto, metodoPago } = req.body;
+  const { idCliente, idProfesional, idDisponibilidad, metodoPago } = req.body;
 
   // Validar datos requeridos
-  if (!idCliente || !idProfesional || !idDisponibilidad || !monto || !metodoPago) {
+  if (!idCliente || !idProfesional || !idDisponibilidad || !metodoPago) {
     return res.status(400).json({ 
       error: "Faltan datos requeridos",
-      detalle: { idCliente, idProfesional, idDisponibilidad, monto, metodoPago }
+      detalle: { idCliente, idProfesional, idDisponibilidad, metodoPago }
     });
   }
 
@@ -64,7 +66,7 @@ router.post("/reservas/crear", async (req, res) => {
     await db.execute(
       `INSERT INTO pago (idUsuario, idSesion, monto, metodoPago, fechaPago) 
        VALUES (?, ?, ?, ?, NOW())`,
-      [idCliente, idSesion, monto, metodoPago]
+      [idCliente, idSesion, TARIFA_FIJA, metodoPago]
     );
 
     // 4. Actualizar el estado de la disponibilidad a 'ocupado'
@@ -78,7 +80,8 @@ router.post("/reservas/crear", async (req, res) => {
       idSesion,
       fecha: horario.fecha,
       horaInicio: horario.horaInicio,
-      horaFin: horario.horaFin
+      horaFin: horario.horaFin,
+      monto: TARIFA_FIJA
     });
 
   } catch (error) {
@@ -117,6 +120,7 @@ router.get("/reservas/profesional/:idProfesional", async (req, res) => {
       INNER JOIN usuario u ON s.idUsuario = u.idUsuario
       INNER JOIN pago p ON s.idSesion = p.idSesion
       WHERE s.idProfesional = ?
+        AND (s.archivadaProfesional IS NULL OR s.archivadaProfesional = 0)
       ORDER BY s.fecha ASC, s.horaInicio ASC
     `;
 
@@ -163,6 +167,7 @@ router.get("/reservas/cliente/:idCliente", async (req, res) => {
       INNER JOIN usuario u ON prof.idUsuario = u.idUsuario
       INNER JOIN pago p ON s.idSesion = p.idSesion
       WHERE s.idUsuario = ?
+        AND (s.archivadaCliente IS NULL OR s.archivadaCliente = 0)
       ORDER BY s.fecha ASC, s.horaInicio ASC
     `;
 
@@ -224,12 +229,19 @@ router.delete("/reservas/cancelar/:idSesion", async (req, res) => {
       [canceladoPor, montoReembolso, descuentoDisponible, idSesion]
     );
 
-    // 4. Liberar la disponibilidad (cambiar estado a 'disponible')
+    // 4. Actualizar la disponibilidad según quién canceló
     if (idDisponibilidad) {
-      await db.execute(
-        "UPDATE disponibilidad SET estado = 'disponible' WHERE idDisponibilidad = ?",
-        [idDisponibilidad]
-      );
+      if (canceladoPor === 'cliente') {
+        await db.execute(
+          "UPDATE disponibilidad SET estado = 'disponible', idCliente = NULL WHERE idDisponibilidad = ?",
+          [idDisponibilidad]
+        );
+      } else if (canceladoPor === 'profesional') {
+        await db.execute(
+          "UPDATE disponibilidad SET estado = 'pendiente', idCliente = NULL WHERE idDisponibilidad = ?",
+          [idDisponibilidad]
+        );
+      }
     }
 
     res.json({ 
@@ -247,6 +259,34 @@ router.delete("/reservas/cancelar/:idSesion", async (req, res) => {
       error: "Error al cancelar la sesión",
       detalle: error.message 
     });
+  }
+});
+
+// PUT /api/reservas/archivar/:idSesion?tipo=cliente|profesional - Ocultar sesión cancelada en listas
+router.put("/reservas/archivar/:idSesion", async (req, res) => {
+  const { idSesion } = req.params;
+  const { tipo } = req.query;
+
+  if (!tipo || (tipo !== "cliente" && tipo !== "profesional")) {
+    return res.status(400).json({ error: "Falta o valor inválido en tipo" });
+  }
+
+  const campo = tipo === "cliente" ? "archivadaCliente" : "archivadaProfesional";
+
+  try {
+    const [resultado] = await db.execute(
+      `UPDATE sesion SET ${campo} = 1 WHERE idSesion = ?`,
+      [idSesion]
+    );
+
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({ error: "Sesión no encontrada" });
+    }
+
+    res.json({ mensaje: "Sesión archivada", idSesion, tipo });
+  } catch (error) {
+    console.error("Error al archivar sesión:", error);
+    res.status(500).json({ error: "Error al archivar la sesión", detalle: error.message });
   }
 });
 

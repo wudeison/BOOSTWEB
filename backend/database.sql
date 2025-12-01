@@ -89,6 +89,8 @@ CREATE TABLE `sesion` (
   `notificacionPendiente` TINYINT(1) DEFAULT 0,
   `montoReembolso` DECIMAL(10,2) DEFAULT NULL,
   `descuentoDisponible` TINYINT(1) DEFAULT 0,
+  `archivadaCliente` TINYINT(1) DEFAULT 0,
+  `archivadaProfesional` TINYINT(1) DEFAULT 0,
   PRIMARY KEY (`idSesion`),
   KEY `idUsuario` (`idUsuario`),
   KEY `idProfesional` (`idProfesional`),

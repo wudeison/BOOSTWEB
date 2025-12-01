@@ -60,21 +60,25 @@ const DisponibilidadProfesional = ({ profesional, onClose }) => {
 
     try {
       const fechaStr = diaSeleccionado.toISOString().split('T')[0];
-      
-      const res = await fetch(`${API_URL}/api/disponibilidad`, {
+      if (horarioForm.horaInicio >= horarioForm.horaFin) {
+        alert("La hora final debe ser mayor a la hora inicial");
+        return;
+      }
+
+      const res = await fetch(`${API_URL}/api/disponibilidad/franja`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           idProfesional: profesional.idProfesional,
           fecha: fechaStr,
           horaInicio: horarioForm.horaInicio,
-          horaFin: horarioForm.horaFin,
-          estado: 'disponible'
+          horaFin: horarioForm.horaFin
         }),
       });
 
       if (res.ok) {
-        alert("✅ Horario guardado correctamente");
+        const data = await res.json();
+        alert(`✅ Bloques generados: ${data.bloquesCreados}`);
         cargarDisponibilidad(profesional.idProfesional, mesActual);
         setDiaSeleccionado(null);
         setHorarioForm({ horaInicio: "09:00", horaFin: "10:00" });

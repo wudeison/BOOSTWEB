@@ -223,16 +223,18 @@ const RegistroPerfilProfesional = () => {
                 <input type="date" id="fechaNacimiento" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} />
               </div>
               {/* Idiomas */}
-              <div className="form-field">
-                <label>Idiomas</label>
-                <div className="checkbox-group">
-                  <div className="checkbox-field">
-                    <input type="checkbox" checked={formData.idiomas.espanol} onChange={(e) => handleIdiomaChange("espanol", e.target.checked)} />
-                    <span>Español</span>
-                  </div>
-                  <div className="checkbox-field">
-                    <input type="checkbox" checked={formData.idiomas.ingles} onChange={(e) => handleIdiomaChange("ingles", e.target.checked)} />
-                    <span>Inglés</span>
+              <div className="form-field idiomas-field">
+                <div className="idiomas-inline">
+                  <label>Idiomas</label>
+                  <div className="checkbox-group inline">
+                    <div className="checkbox-field">
+                      <input type="checkbox" checked={formData.idiomas.espanol} onChange={(e) => handleIdiomaChange("espanol", e.target.checked)} />
+                      <span>Español</span>
+                    </div>
+                    <div className="checkbox-field">
+                      <input type="checkbox" checked={formData.idiomas.ingles} onChange={(e) => handleIdiomaChange("ingles", e.target.checked)} />
+                      <span>Inglés</span>
+                    </div>
                   </div>
                 </div>
                 <input type="text" placeholder="Otros idiomas" value={formData.idiomas.otros} onChange={(e) => handleIdiomaChange("otros", e.target.value)} style={{ marginTop: '10px', maxWidth: '250px' }} />

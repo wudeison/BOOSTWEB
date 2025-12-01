@@ -77,6 +77,8 @@ const BienveProfesional = () => {
       const data = await response.json();
       if (response.ok) {
         setSesiones(data.sesiones || []);
+      } else {
+        console.error("Error al cargar sesiones:", data.error);
       }
     } catch (error) {
       console.error("Error al cargar sesiones:", error);
@@ -107,6 +109,14 @@ const BienveProfesional = () => {
     return hora?.substring(0, 5) || "";
   };
 
+  const ordenarSesiones = (lista = []) => {
+    return [...lista].sort((a, b) => {
+      const fechaA = new Date(`${a.fecha}T${a.horaInicio || "00:00"}`);
+      const fechaB = new Date(`${b.fecha}T${b.horaInicio || "00:00"}`);
+      return fechaA - fechaB;
+    });
+  };
+
   const cancelarSesion = async (idSesion) => {
     if (!window.confirm("¿Estás seguro de cancelar esta sesión?")) {
       return;
@@ -131,6 +141,10 @@ const BienveProfesional = () => {
     }
   };
 
+  const eliminarSesionLocal = (idSesion) => {
+    setSesiones((prev) => prev.filter((sesion) => sesion.idSesion !== idSesion));
+  };
+
   const getGreeting = () => {
     const hour = currentTime.getHours();
     if (hour < 12) return "Buenos días";
@@ -142,6 +156,35 @@ const BienveProfesional = () => {
     localStorage.removeItem("profesional");
     localStorage.removeItem("usuario");
     navigate("/");
+  };
+
+  const handleDeleteProfile = async () => {
+    if (!profesional?.idUsuario) {
+      alert("No encontramos el identificador del usuario");
+      return;
+    }
+
+    const confirmacion = window.confirm("Esta acción eliminará tu perfil profesional y toda la información asociada. ¿Deseas continuar?");
+    if (!confirmacion) return;
+
+    try {
+      const response = await fetch(`http://localhost:4000/api/usuarios/${profesional.idUsuario}`, {
+        method: "DELETE",
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.mensaje || data.error || "No se pudo eliminar el perfil");
+      }
+
+      localStorage.removeItem("profesional");
+      localStorage.removeItem("usuario");
+      alert("Tu perfil fue eliminado exitosamente");
+      navigate("/");
+    } catch (error) {
+      console.error("Error al eliminar perfil:", error);
+      alert(error.message || "Ocurrió un error al eliminar el perfil");
+    }
   };
 
   const calcularEdad = (fechaNacimiento) => {
@@ -168,6 +211,24 @@ const BienveProfesional = () => {
     }
   };
 
+  const archivarSesionCancelada = async (idSesion) => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/reservas/archivar/${idSesion}?tipo=profesional`, {
+        method: "PUT",
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "No se pudo archivar la sesión");
+      }
+
+      setSesiones((prev) => prev.filter((sesion) => sesion.idSesion !== idSesion));
+    } catch (error) {
+      console.error(error);
+      alert(error.message || "Error al archivar la sesión");
+    }
+  };
+
   const renderHabilidades = () => {
     if (!profesional?.habilidadesBlandas) return null;
     const habilidades = [];
@@ -188,6 +249,14 @@ const BienveProfesional = () => {
     
     return idiomas.length > 0 ? idiomas.join(", ") : null;
   };
+
+  const sesionesPendientes = ordenarSesiones(
+    sesiones.filter((sesion) => sesion.estado !== "cancelada")
+  );
+
+  const sesionesCanceladas = ordenarSesiones(
+    sesiones.filter((sesion) => sesion.estado === "cancelada")
+  );
 
   if (loading) {
     return (
@@ -223,12 +292,17 @@ const BienveProfesional = () => {
               <p className="user-name">{profesional.nombreCompleto?.split(' ')[0] || profesional.nombre?.split(' ')[0] || 'Profesional'}</p>
             </div>
           </div>
-          <button onClick={handleLogout} className="btn-logout">
-            <span>🚪</span> Cerrar sesión
-          </button>
+          <div className="header-actions">
+            <button onClick={handleLogout} className="btn-logout">
+              <span>🚪</span> Cerrar sesión
+            </button>
+            <button onClick={handleDeleteProfile} className="btn-delete-inline">
+              🗑️ Eliminar perfil
+            </button>
+          </div>
         </nav>
 
-        {/* Sección de sesiones reservadas en el área azul - Lado izquierdo */}
+        {/* Sesiones pendientes - Lado izquierdo */}
         <div className="sesiones-lateral sesiones-izquierda">
           <h3 className="sesiones-lateral-titulo">📋 Próximas Sesiones</h3>
           
@@ -236,72 +310,13 @@ const BienveProfesional = () => {
             <div className="loading-sesiones-lateral">
               <p>Cargando...</p>
             </div>
-          ) : sesiones.length === 0 ? (
+          ) : sesionesPendientes.length === 0 ? (
             <div className="sin-sesiones-lateral">
               <p>📭 Sin sesiones</p>
             </div>
           ) : (
             <div className="sesiones-lista">
-              {sesiones.filter((sesion, index) => index % 2 === 0 && (sesion.estado !== 'cancelada' || sesion.notificacionPendiente === 1)).map((sesion) => (
-                <div key={sesion.idSesion} className="sesion-card-lateral">
-                  {sesion.estado !== 'cancelada' && (
-                    <button 
-                      className="btn-cancelar-sesion btn-cancelar-sesion-bottom" 
-                      onClick={() => cancelarSesion(sesion.idSesion)}
-                      title="Cancelar sesión"
-                    >
-                      🗑️
-                    </button>
-                  )}
-                  <div className="sesion-fecha-hora">
-                    <p className="fecha-texto">{formatearFecha(sesion.fecha)}</p>
-                    <p className="hora-texto">{formatearHora(sesion.horaInicio)} - {formatearHora(sesion.horaFin)}</p>
-                  </div>
-                  <div className="sesion-detalles">
-                    <p className="cliente-nombre">👤 {sesion.nombreCliente}</p>
-                    <p className="monto-texto">💰 ${parseFloat(sesion.monto).toLocaleString('es-CO')}</p>
-                  </div>
-                  <span className={`estado-badge-lateral estado-${sesion.estado}`}>
-                    {sesion.estado}
-                  </span>
-                    {/* Notificación de cancelación */}
-                    {sesion.notificacionPendiente === 1 && (
-                      <div className="notificacion-cancelacion">
-                        {sesion.canceladoPor === 'cliente' && (
-                          <>
-                            <p>El cliente canceló la sesión. Se devolverá el 70% del valor pagado.</p>
-                            <button className="btn-aceptar-notificacion" onClick={() => aceptarNotificacion(sesion.idSesion)}>Aceptar</button>
-                          </>
-                        )}
-                        {sesion.canceladoPor === 'profesional' && (
-                          <>
-                            <p>Has cancelado esta sesión. El cliente puede reagendar con 30% de descuento.</p>
-                            <button className="btn-aceptar-notificacion" onClick={() => aceptarNotificacion(sesion.idSesion)}>Aceptar</button>
-                          </>
-                        )}
-                      </div>
-                    )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Sección de sesiones reservadas en el área azul - Lado derecho */}
-        <div className="sesiones-lateral sesiones-derecha">
-          <h3 className="sesiones-lateral-titulo">📋 Próximas Sesiones</h3>
-          
-          {loadingSesiones ? (
-            <div className="loading-sesiones-lateral">
-              <p>Cargando...</p>
-            </div>
-          ) : sesiones.length === 0 ? (
-            <div className="sin-sesiones-lateral">
-              <p>📭 Sin sesiones</p>
-            </div>
-          ) : (
-            <div className="sesiones-lista">
-              {sesiones.filter((sesion, index) => index % 2 !== 0 && (sesion.estado !== 'cancelada' || sesion.notificacionPendiente === 1)).map((sesion) => (
+              {sesionesPendientes.map((sesion) => (
                 <div key={sesion.idSesion} className="sesion-card-lateral">
                   {sesion.estado !== 'cancelada' && (
                     <button 
@@ -324,6 +339,66 @@ const BienveProfesional = () => {
                     {sesion.estado}
                   </span>
                   {/* Notificación de cancelación */}
+                  {sesion.notificacionPendiente === 1 && (
+                    <div className="notificacion-cancelacion">
+                      {sesion.canceladoPor === 'cliente' && (
+                        <>
+                          <p>El cliente canceló la sesión. Se devolverá el 70% del valor pagado.</p>
+                          <button className="btn-aceptar-notificacion" onClick={() => aceptarNotificacion(sesion.idSesion)}>Aceptar</button>
+                        </>
+                      )}
+                      {sesion.canceladoPor === 'profesional' && (
+                        <>
+                          <p>Has cancelado esta sesión. El cliente puede reagendar con 30% de descuento.</p>
+                          <button className="btn-aceptar-notificacion" onClick={() => aceptarNotificacion(sesion.idSesion)}>Aceptar</button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Sesiones canceladas - Lado derecho */}
+        <div className="sesiones-lateral sesiones-derecha">
+          <h3 className="sesiones-lateral-titulo">🗑️ Sesiones canceladas</h3>
+          {loadingSesiones ? (
+            <div className="loading-sesiones-lateral">
+              <p>Cargando...</p>
+            </div>
+          ) : sesionesCanceladas.length === 0 ? (
+            <div className="sin-sesiones-lateral">
+              <p>📭 Sin cancelaciones</p>
+            </div>
+          ) : (
+            <div className="sesiones-lista">
+              {sesionesCanceladas.map((sesion) => (
+                <div key={sesion.idSesion} className="sesion-card-lateral">
+                  <button 
+                    className="btn-cancelar-sesion btn-cancelar-sesion-bottom" 
+                    onClick={() => archivarSesionCancelada(sesion.idSesion)}
+                    title="Quitar de la lista"
+                  >
+                    🗑️
+                  </button>
+                  <div className="sesion-fecha-hora">
+                    <p className="fecha-texto">{formatearFecha(sesion.fecha)}</p>
+                    <p className="hora-texto">{formatearHora(sesion.horaInicio)} - {formatearHora(sesion.horaFin)}</p>
+                  </div>
+                  <div className="sesion-detalles">
+                    <p className="cliente-nombre">👤 {sesion.nombreCliente}</p>
+                    <p className="monto-texto">💰 ${parseFloat(sesion.monto).toLocaleString('es-CO')}</p>
+                  </div>
+                  <span className={`estado-badge-lateral estado-${sesion.estado}`}>
+                    {sesion.estado}
+                  </span>
+                  {sesion.canceladoPor && (
+                    <p className="cancelado-por-texto">
+                      Cancelado por: {sesion.canceladoPor === 'profesional' ? 'Profesional' : 'Cliente'}
+                    </p>
+                  )}
                   {sesion.notificacionPendiente === 1 && (
                     <div className="notificacion-cancelacion">
                       {sesion.canceladoPor === 'cliente' && (

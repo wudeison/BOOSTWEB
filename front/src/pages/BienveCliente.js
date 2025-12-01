@@ -5,22 +5,6 @@ import logo from "../assets/logo.PNG";
 import API_URL from "../config";
 
 const BienveCliente = () => {
-    // Alternar sesiones por fecha: más próxima a la izquierda, siguiente a la derecha
-    const getSesionesAlternadas = () => {
-      const visibles = sesiones.filter(s => s.estado !== 'cancelada' || s.notificacionPendiente === 1);
-      visibles.sort((a, b) => {
-        const fechaA = new Date(a.fecha + 'T' + (a.horaInicio || '00:00'));
-        const fechaB = new Date(b.fecha + 'T' + (b.horaInicio || '00:00'));
-        return fechaA - fechaB;
-      });
-      const izquierda = [];
-      const derecha = [];
-      visibles.forEach((sesion, i) => {
-        if (i % 2 === 0) izquierda.push(sesion);
-        else derecha.push(sesion);
-      });
-      return { izquierda, derecha };
-    };
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -113,6 +97,14 @@ const BienveCliente = () => {
     return hora?.substring(0, 5) || "";
   };
 
+  const ordenarSesiones = (lista = []) => {
+    return [...lista].sort((a, b) => {
+      const fechaA = new Date(`${a.fecha}T${a.horaInicio || "00:00"}`);
+      const fechaB = new Date(`${b.fecha}T${b.horaInicio || "00:00"}`);
+      return fechaA - fechaB;
+    });
+  };
+
   const cancelarSesion = async (idSesion) => {
     if (window.confirm("¿Estás seguro de que deseas cancelar esta sesión?")) {
       try {
@@ -146,7 +138,37 @@ const BienveCliente = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("cliente");
+    localStorage.removeItem("usuario");
     navigate("/");
+  };
+
+  const handleDeleteProfile = async () => {
+    if (!cliente?.idUsuario) {
+      alert("No encontramos el identificador del usuario");
+      return;
+    }
+
+    const confirmacion = window.confirm("Esta acción eliminará tu perfil y sesiones asociadas. ¿Deseas continuar?");
+    if (!confirmacion) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/usuarios/${cliente.idUsuario}`, {
+        method: "DELETE",
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.mensaje || data.error || "No se pudo eliminar el perfil");
+      }
+
+      localStorage.removeItem("cliente");
+      localStorage.removeItem("usuario");
+      alert("Tu perfil fue eliminado exitosamente");
+      navigate("/");
+    } catch (error) {
+      console.error("Error al eliminar perfil:", error);
+      alert(error.message || "Ocurrió un error al eliminar el perfil");
+    }
   };
 
   const calcularEdad = (fechaNacimiento) => {
@@ -173,6 +195,24 @@ const BienveCliente = () => {
     }
   };
 
+  const archivarSesionCancelada = async (idSesion) => {
+    try {
+      const response = await fetch(`${API_URL}/api/reservas/archivar/${idSesion}?tipo=cliente`, {
+        method: "PUT",
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "No se pudo archivar la sesión");
+      }
+
+      setSesiones((prev) => prev.filter((sesion) => sesion.idSesion !== idSesion));
+    } catch (error) {
+      console.error(error);
+      alert(error.message || "Error al archivar la sesión");
+    }
+  };
+
   if (loading) {
     return (
       <div className="profile-page">
@@ -194,6 +234,14 @@ const BienveCliente = () => {
     );
   }
 
+    const sesionesPendientes = ordenarSesiones(
+      sesiones.filter((sesion) => sesion.estado !== 'cancelada')
+    );
+
+    const sesionesCanceladas = ordenarSesiones(
+      sesiones.filter((sesion) => sesion.estado === 'cancelada')
+    );
+
   return (
 
     <main className="profile-page">
@@ -208,25 +256,30 @@ const BienveCliente = () => {
               <p className="user-name">{cliente.nombre?.split(' ')[0] || 'Usuario'}</p>
             </div>
           </div>
-          <button onClick={handleLogout} className="btn-logout">
-            <span>🚪</span> Cerrar sesión
-          </button>
+          <div className="header-actions">
+            <button onClick={handleLogout} className="btn-logout">
+              <span>🚪</span> Cerrar sesión
+            </button>
+            <button onClick={handleDeleteProfile} className="btn-delete-inline">
+              🗑️ Eliminar perfil
+            </button>
+          </div>
         </nav>
 
-        {/* Sesiones del cliente - Lado izquierdo */}
+        {/* Sesiones pendientes - Lado izquierdo */}
         <div className="sesiones-lateral sesiones-izquierda">
           <h3 className="sesiones-lateral-titulo">📅 Próximas Sesiones</h3>
           {loadingSesiones ? (
             <div className="loading-sesiones-lateral">
               <p>Cargando...</p>
             </div>
-          ) : sesiones.length === 0 ? (
+          ) : sesionesPendientes.length === 0 ? (
             <div className="sin-sesiones-lateral">
               <p>📭 Sin sesiones</p>
             </div>
           ) : (
             <div className="sesiones-lista">
-              {getSesionesAlternadas().izquierda.map((sesion) => (
+              {sesionesPendientes.map((sesion) => (
                 <div key={sesion.idSesion} className="sesion-card-lateral">
                   <div className="sesion-fecha-hora">
                     <p className="fecha-texto">{formatearFecha(sesion.fecha)}</p>
@@ -268,21 +321,28 @@ const BienveCliente = () => {
           )}
         </div>
 
-        {/* Sesiones del cliente - Lado derecho */}
+        {/* Sesiones canceladas - Lado derecho */}
         <div className="sesiones-lateral sesiones-derecha">
-          <h3 className="sesiones-lateral-titulo">📅 Próximas Sesiones</h3>
+          <h3 className="sesiones-lateral-titulo">🗑️ Sesiones canceladas</h3>
           {loadingSesiones ? (
             <div className="loading-sesiones-lateral">
               <p>Cargando...</p>
             </div>
-          ) : sesiones.length === 0 ? (
+          ) : sesionesCanceladas.length === 0 ? (
             <div className="sin-sesiones-lateral">
-              <p>📭 Sin sesiones</p>
+              <p>📭 Sin cancelaciones</p>
             </div>
           ) : (
             <div className="sesiones-lista">
-              {getSesionesAlternadas().derecha.map((sesion) => (
+              {sesionesCanceladas.map((sesion) => (
                 <div key={sesion.idSesion} className="sesion-card-lateral">
+                  <button 
+                    className="btn-cancelar-sesion btn-cancelar-sesion-bottom"
+                    onClick={() => archivarSesionCancelada(sesion.idSesion)}
+                    title="Quitar de la lista"
+                  >
+                    🗑️
+                  </button>
                   <div className="sesion-fecha-hora">
                     <p className="fecha-texto">{formatearFecha(sesion.fecha)}</p>
                     <p className="hora-texto">{formatearHora(sesion.horaInicio)} - {formatearHora(sesion.horaFin)}</p>
@@ -294,6 +354,11 @@ const BienveCliente = () => {
                   <span className={`estado-badge-lateral estado-${sesion.estado}`}>
                     {sesion.estado}
                   </span>
+                  {sesion.canceladoPor && (
+                    <p className="cancelado-por-texto">
+                      Cancelado por: {sesion.canceladoPor === 'profesional' ? 'Profesional' : 'Cliente'}
+                    </p>
+                  )}
                   {/* Notificación de penalidad en la tarjeta */}
                   {sesion.notificacionPendiente === 1 && (
                     <div className="notificacion-cancelacion">
@@ -307,15 +372,6 @@ const BienveCliente = () => {
                         Ocultar notificación
                       </button>
                     </div>
-                  )}
-                  {sesion.estado !== 'cancelada' && (
-                    <button 
-                      className="btn-cancelar-sesion btn-cancelar-sesion-bottom" 
-                      onClick={() => cancelarSesion(sesion.idSesion)}
-                      title="Cancelar sesión"
-                    >
-                      🗑️
-                    </button>
                   )}
                 </div>
               ))}

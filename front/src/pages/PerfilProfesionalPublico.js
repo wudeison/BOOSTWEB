@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import logo from "../assets/logo.PNG";
 import "./PerfilProfesionalPublico.css";
+
+const TARIFA_FIJA = 80000;
+const formatoCOP = new Intl.NumberFormat("es-CO", {
+  style: "currency",
+  currency: "COP",
+  minimumFractionDigits: 0,
+});
 
 function PerfilProfesionalPublico() {
   const { id } = useParams();
@@ -58,7 +64,6 @@ function PerfilProfesionalPublico() {
     e.preventDefault();
     
     const formData = new FormData(e.target);
-    const monto = formData.get('monto');
     const metodoPago = formData.get('metodoPago');
 
     // Obtener ID del cliente desde localStorage
@@ -82,7 +87,6 @@ function PerfilProfesionalPublico() {
           idCliente,
           idProfesional: profesional.idProfesional,
           idDisponibilidad: horarioSeleccionado.idDisponibilidad,
-          monto: parseFloat(monto),
           metodoPago,
         }),
       });
@@ -90,7 +94,7 @@ function PerfilProfesionalPublico() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`¡Reserva exitosa! Tu sesión está programada para el ${formatearFecha(data.fecha)} de ${formatearHora(data.horaInicio)} a ${formatearHora(data.horaFin)}`);
+        alert(`¡Reserva exitosa! Tu sesión está programada para el ${formatearFecha(data.fecha)} de ${formatearHora(data.horaInicio)} a ${formatearHora(data.horaFin)} por ${formatoCOP.format(TARIFA_FIJA)}`);
         cerrarModalPago();
         cargarPerfil(); // Recargar disponibilidad
       } else {
@@ -259,13 +263,16 @@ function PerfilProfesionalPublico() {
                         className="horario-btn"
                         onClick={() => abrirModalReserva(horario)}
                       >
-                        <span className="hora-inicio">
-                          {formatearHora(horario.horaInicio)}
-                        </span>
-                        <span className="separador">-</span>
-                        <span className="hora-fin">
-                          {formatearHora(horario.horaFin)}
-                        </span>
+                        <div className="horario-rango">
+                          <span className="hora-inicio">
+                            {formatearHora(horario.horaInicio)}
+                          </span>
+                          <span className="separador">-</span>
+                          <span className="hora-fin">
+                            {formatearHora(horario.horaFin)}
+                          </span>
+                        </div>
+                        <span className="tarifa-fija">{formatoCOP.format(TARIFA_FIJA)}</span>
                       </button>
                     ))}
                   </div>
@@ -295,6 +302,9 @@ function PerfilProfesionalPublico() {
                 <strong>Horario:</strong> {formatearHora(horarioSeleccionado.horaInicio)} -{" "}
                 {formatearHora(horarioSeleccionado.horaFin)}
               </p>
+              <p>
+                <strong>Tarifa:</strong> {formatoCOP.format(TARIFA_FIJA)}
+              </p>
             </div>
             <div className="reserva-modal-actions">
               <button className="btn-cancelar" onClick={cerrarModalReserva}>
@@ -322,20 +332,12 @@ function PerfilProfesionalPublico() {
                 <strong>Horario:</strong> {formatearHora(horarioSeleccionado.horaInicio)} -{" "}
                 {formatearHora(horarioSeleccionado.horaFin)}
               </p>
+              <p>
+                <strong>Total a pagar:</strong> {formatoCOP.format(TARIFA_FIJA)}
+              </p>
             </div>
 
             <form className="pago-form" onSubmit={procesarPago}>
-              <div className="form-group">
-                <label htmlFor="monto">Monto a pagar</label>
-                <input
-                  type="number"
-                  id="monto"
-                  name="monto"
-                  placeholder="Ingrese el monto"
-                  required
-                />
-              </div>
-
               <div className="form-group">
                 <label htmlFor="metodoPago">Método de pago</label>
                 <select id="metodoPago" name="metodoPago" required>

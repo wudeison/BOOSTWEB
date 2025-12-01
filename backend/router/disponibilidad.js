@@ -2,6 +2,21 @@ const express = require("express");
 const router = express.Router();
 const db = require("../database");
 
+const SLOT_DURATION_MINUTES = 60;
+
+const timeToMinutes = (timeStr) => {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  return hours * 60 + minutes;
+};
+
+const minutesToTime = (minutesTotal) => {
+  const hours = Math.floor(minutesTotal / 60)
+    .toString()
+    .padStart(2, "0");
+  const minutes = (minutesTotal % 60).toString().padStart(2, "0");
+  return `${hours}:${minutes}:00`;
+};
+
 // GET - Obtener disponibilidad de un profesional para un mes específico
 router.get("/disponibilidad/:idProfesional", async (req, res) => {
   const { idProfesional } = req.params;
@@ -63,6 +78,48 @@ router.post("/disponibilidad", async (req, res) => {
   } catch (error) {
     console.error("❌ Error al guardar disponibilidad:", error);
     res.status(500).json({ mensaje: "Error al guardar disponibilidad" });
+  }
+});
+
+// POST - Generar bloques de una hora dentro de una franja
+router.post("/disponibilidad/franja", async (req, res) => {
+  const { idProfesional, fecha, horaInicio, horaFin } = req.body;
+
+  if (!idProfesional || !fecha || !horaInicio || !horaFin) {
+    return res.status(400).json({ mensaje: "Faltan datos obligatorios" });
+  }
+
+  const inicioMin = timeToMinutes(horaInicio);
+  const finMin = timeToMinutes(horaFin);
+
+  if (isNaN(inicioMin) || isNaN(finMin) || finMin <= inicioMin) {
+    return res.status(400).json({ mensaje: "Horario inválido" });
+  }
+
+  const bloques = [];
+  for (let actual = inicioMin; actual < finMin; actual += SLOT_DURATION_MINUTES) {
+    const siguiente = Math.min(actual + SLOT_DURATION_MINUTES, finMin);
+    const inicio = minutesToTime(actual);
+    const fin = minutesToTime(siguiente);
+    bloques.push({ inicio, fin });
+  }
+
+  try {
+    const promises = bloques.map(({ inicio, fin }) =>
+      db.query(
+        `INSERT INTO disponibilidad (idProfesional, fecha, horaInicio, horaFin, estado, idCliente, notas)
+         VALUES (?, ?, ?, ?, 'disponible', NULL, NULL)
+         ON DUPLICATE KEY UPDATE estado = 'disponible', idCliente = NULL, notas = NULL`,
+        [idProfesional, fecha, inicio, fin]
+      )
+    );
+
+    await Promise.all(promises);
+
+    res.json({ mensaje: "Bloques generados", bloquesCreados: bloques.length, bloques });
+  } catch (error) {
+    console.error("❌ Error al generar bloques:", error);
+    res.status(500).json({ mensaje: "Error al generar bloques", detalle: error.message });
   }
 });
 
